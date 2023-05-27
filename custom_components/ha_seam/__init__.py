@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 
 import seamapi
+from seamapi.types import AccessCode, Device as SeamDevice
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -23,20 +24,20 @@ class SeamManager:
         """Initialize."""
         self.hass = hass
         self.api_client = seamapi.Seam(api_key)
-        self.lock2device = {}
-        self.device2lock = {}
+        self.seam2ha: dict[str, dr.DeviceEntry] = {}
+        self.device2lock: dict[str, SeamDevice] = {}
 
     def get_locks(self):
         """Get all locks."""
         return self.api_client.locks.list()
 
-    def get_access_codes(self, lock):
+    def get_access_codes(self, lock: SeamDevice):
         """Get all access codes for a lock."""
         return self.api_client.access_codes.list(device=lock)
 
-    def add_device(self, lock, device: dr.DeviceEntry):
+    def add_device(self, lock: SeamDevice, device: dr.DeviceEntry):
         """Add a lock to the device registry."""
-        self.lock2device[lock.device_id] = device
+        self.seam2ha[lock.device_id] = device
         self.device2lock[device.id] = lock
 
     async def create_code(
@@ -46,8 +47,9 @@ class SeamManager:
         name: str = "test",
         starts_at: str = "2023-05-01T16:00:00-0600",
         ends_at: str = "2033-12-31T11:15:00-0600",
-    ):
+    ) -> AccessCode:
         """Create a new access code."""
+
         def _create_code(device, code, name, starts_at, ends_at):
             return self.api_client.access_codes.create(
                 device=device,
@@ -57,20 +59,16 @@ class SeamManager:
                 ends_at=ends_at,
             )
 
-        try:
-            await self.hass.async_add_executor_job(
-                _create_code,
-                device,
-                code,
-                name,
-                starts_at,
-                ends_at,
-            )
-            _LOGGER.info("Successfully created code")
-            return True
-        except Exception as exc:  # pylint: disable=broad-except
-            _LOGGER.error("Failed to create code: %s", exc)
-            return False
+        access_code_obj = await self.hass.async_add_executor_job(
+            _create_code,
+            device,
+            code,
+            name,
+            starts_at,
+            ends_at,
+        )
+        _LOGGER.info("Successfully created code")
+        return access_code_obj
 
 
 async def async_setup_entry(
