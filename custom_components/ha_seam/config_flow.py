@@ -13,7 +13,6 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
 from .const import DOMAIN
-from .seam_utils import get_locks
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,19 +41,13 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         """Test if we can authenticate with the host."""
         try:
             # make an API call to validate the API key
-            get_locks(seamapi.Seam(api_key))
+            seamapi.Seam(api_key).locks.list()
             return {"title": "Seam", "data": api_key}
-        except Exception:  # pylint: disable=broad-except
-            raise InvalidAuth  # pylink: disable=raise-missing-from
+        except Exception as exc:  # pylint: disable=broad-except
+            _LOGGER.error("Failed to authenticate with API key %s", api_key)
+            raise InvalidAuth from exc # pylink: disable=raise-missing-from
 
     return await hass.async_add_executor_job(authenticate, data.get("api_key", ""))
-
-    # If you cannot connect:
-    # throw CannotConnect
-    # If the authentication is wrong:
-    # InvalidAuth
-
-    # Return info that you want to store in the config entry.
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
