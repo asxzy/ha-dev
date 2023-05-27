@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "description": "Enter your Seam API Key",
+        "data": {
+          "api_key": "[%key:common::config_flow::data::api_key%]"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+    }
+  },
+  "device_automation": {
+    "action_type": {
+      "turn_on": "Turn on {entity_name}",
+      "turn_off": "Turn off {entity_name}",
+      "clear_lock_access_code": "Clear access_code on {entity_name}",
+      "set_lock_access_code": "Set a access_code on {entity_name}"
+    }
+  }
+}

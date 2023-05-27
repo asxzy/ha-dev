@@ -1,0 +1,30 @@
+# clear_lock_access_code:
+#   name: Clear a access_code from a lock
+#   description: Clear a access_code from a lock
+#   target:
+#     entity:
+#       domain: lock
+#       integration: ha_seam
+#   fields:
+#     name:
+#       name: Name
+#       description: Guest Name
+#       required: true
+#       example: 'John'
+#       selector:
+#         text:
+set_lock_access_code:
+  name: Set a access_code on a lock
+  description: Set a access_code on a lock
+  target:
+    entity:
+      domain: lock
+      integration: ha_seam
+  fields:
+    access_code:
+      name: Code
+      description: Code to set.
+      required: true
+      example: 1234
+      selector:
+        text:

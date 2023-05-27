@@ -1,0 +1,14 @@
+{
+  "domain": "ha_seam",
+  "name": "Seam Integeration for Home Assistant",
+  "codeowners": ["@asxzy"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://www.home-assistant.io/integrations/ha_seam",
+  "homekit": {},
+  "iot_class": "cloud_polling",
+  "requirements": ["seamapi==2.12.2"],
+  "ssdp": [],
+  "zeroconf": [],
+  "version": "v0.0.0"
+}
