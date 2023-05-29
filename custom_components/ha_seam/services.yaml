@@ -16,7 +16,6 @@ clear_lock_access_code:
       example: "John"
       selector:
         text:
-
 set_lock_access_code:
   name: Set a access_code on a lock
   description: Set a access_code on a lock
@@ -25,9 +24,30 @@ set_lock_access_code:
       integration: ha_seam
   fields:
     access_code:
-      name: Code
+      name: Access Code
       description: Code to set.
       required: true
       example: 1234
+      selector:
+        text:
+    guest_name:
+      name: Guest Name
+      description: Guest Name to set.
+      required: true
+      example: John
+      selector:
+        text:
+    starts_at:
+      name: Starts At
+      description: Code to start at.
+      required: true
+      example: 2023-01-01T16:00:00-0600
+      selector:
+        text:
+    ends_at:
+      name: Ends At
+      description: Code to end at.
+      required: true
+      example: 2024-01-01T11:15:00-0600
       selector:
         text:

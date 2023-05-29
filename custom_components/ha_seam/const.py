@@ -11,5 +11,9 @@ SERVICE_SET_LOCK_ACCESS_CODE: Final = "set_lock_access_code"
 SERVICE_SET_VALUE: Final = "set_value"
 
 ATTR_ACCESS_CODE: Final = "access_code"
+ATTR_GUEST_NAME: Final = "guest_name"
+ATTR_STARTS_AT: Final = "starts_at"
+ATTR_ENDS_AT: Final = "ends_at"
 ACCESS_CODE_ICON: Final = "mdi:account-key"
+LOCK_ICON: Final = "mdi:lock"
 MAX_ACCESS_CODES: Final = 5
