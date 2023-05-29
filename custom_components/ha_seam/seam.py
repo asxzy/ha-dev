@@ -52,13 +52,10 @@ class SeamManager:
         """Get all locks."""
         for seam_device in await self.hass.async_add_executor_job(self.api_client.locks.list):
             if seam_device.device_type == "august_lock":
-                # try to skip locks without a keypad
-                try:
-                    if not seam_device.properties.august_metadata.has_keypad:
-                        _LOGGER.info("Skipping lock without keypad: %s", seam_device.device_id)
-                        continue
-                except AttributeError:
-                    _LOGGER.info("Could not determine if lock has keypad: %s", seam_device.device_id)
+                # skip locks without a keypad
+                if 'access_code' not in seam_device.capabilities_supported:
+                    _LOGGER.info("Skipping lock without keypad: %s", seam_device.device_id)
+                    continue
 
                 _LOGGER.info("Found lock: %s", seam_device.device_id)
                 seam_lock = SeamLock(self, seam_device)

@@ -152,6 +152,7 @@ class SeamAccessCodeSensor(BinarySensorEntity):
         self._ends_at = seam_access_code.ends_at
         self._access_code_id = seam_access_code.access_code_id
 
+
     def update_sensor(
         self,
         idx: int,

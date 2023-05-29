@@ -20,7 +20,6 @@ from .const import (
     ATTR_STARTS_AT,
     DOMAIN,
     LOCK_ICON,
-    SERVICE_CLEAR_LOCK_ACCESS_CODE,
     SERVICE_SET_LOCK_ACCESS_CODE,
 )
 from .sensor import SeamAccessCodeSensor
@@ -55,13 +54,6 @@ async def async_setup_entry(
         "async_set_lock_access_code",
     )
 
-    platform.async_register_entity_service(
-        SERVICE_CLEAR_LOCK_ACCESS_CODE,
-        {
-            vol.Required(ATTR_ACCESS_CODE): cv.string,
-        },
-        "async_clear_lock_access_code",
-    )
 
 
 class SeamLock(LockEntity):
@@ -119,9 +111,9 @@ class SeamLock(LockEntity):
     async def async_set_lock_access_code(
         self,
         access_code: str,
-        guest_name: str ,
-        starts_at: str , # "2023-05-01T16:00:00-0600"
-        ends_at: str ,
+        guest_name: str,
+        starts_at: str,  # "2023-05-01T16:00:00-0600"
+        ends_at: str,
     ) -> None:
         """Set the access_code to index X on the lock."""
         _LOGGER.info("Function triggered async_set_lock_access_code")
@@ -129,20 +121,34 @@ class SeamLock(LockEntity):
         # starts_at_dt = datetime.strptime(starts_at, '%Y-%m-%dT%H:%M:%S%z')
         # starts_at = starts_at_dt.format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z'
 
-
         for sensor in self.access_code_sensors:
             if sensor.access_code == access_code:
                 _LOGGER.info("User code '%s' already set", access_code)
                 # check if the code details are the same
                 # show a warning if they are not
                 if sensor.guest_name != guest_name:
-                    _LOGGER.error("User code '%s' already set with different guest name. Request '%s' but existing '%s'", access_code, guest_name, sensor.guest_name)
+                    _LOGGER.error(
+                        "User code '%s' already set with different guest name. Request '%s' but existing '%s'",
+                        access_code,
+                        guest_name,
+                        sensor.guest_name,
+                    )
                     return False
                 if dt_parser.isoparse(sensor.starts_at) != dt_parser.isoparse(starts_at):
-                    _LOGGER.error("User code '%s' already set with different start time. Request '%s' but existing '%s'", access_code, starts_at, sensor.starts_at)
+                    _LOGGER.error(
+                        "User code '%s' already set with different start time. Request '%s' but existing '%s'",
+                        access_code,
+                        starts_at,
+                        sensor.starts_at,
+                    )
                     return False
                 if dt_parser.isoparse(sensor.ends_at) != dt_parser.isoparse(ends_at):
-                    _LOGGER.error("User code '%s' already set with different end time. Request '%s' but existing '%s'", access_code, ends_at, sensor.ends_at)
+                    _LOGGER.error(
+                        "User code '%s' already set with different end time. Request '%s' but existing '%s'",
+                        access_code,
+                        ends_at,
+                        sensor.ends_at,
+                    )
                     return False
                 return True
             elif sensor.access_code is None:
@@ -156,16 +162,11 @@ class SeamLock(LockEntity):
                     )
                     _LOGGER.debug("User code '%s' set", access_code)
                     return True
-                except Exception as exc: # pylint: disable=broad-except
+                except Exception as exc:  # pylint: disable=broad-except
                     _LOGGER.error("Failed to set user code '%s': %s", access_code, exc)
                 return False
         _LOGGER.error("Out of slots")
         return False
-
-    async def async_clear_lock_access_code(self, access_code: int) -> None:
-        """Clear the access_code at index X on the lock."""
-        # await clear_access_code(self.info.node, code_slot)
-        _LOGGER.debug("User code '%s' cleared", access_code)
 
     async def async_lock(self, **kwargs: Any) -> None:
         """Lock the device."""

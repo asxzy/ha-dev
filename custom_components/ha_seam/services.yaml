@@ -1,21 +1,3 @@
-clear_lock_access_code:
-  name: Clear a access_code from a lock
-  description: Clear a access_code from a lock
-  fields:
-    entity_id:
-      name: Lock
-      description: Lock to add a code to
-      required: true
-      selector:
-        entity:
-          domain: lock
-    name:
-      name: Name
-      description: Guest Name
-      required: true
-      example: "John"
-      selector:
-        text:
 set_lock_access_code:
   name: Set a access_code on a lock
   description: Set a access_code on a lock
