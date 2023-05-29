@@ -118,9 +118,6 @@ class SeamLock(LockEntity):
         """Set the access_code to index X on the lock."""
         _LOGGER.info("Function triggered async_set_lock_access_code")
 
-        # starts_at_dt = datetime.strptime(starts_at, '%Y-%m-%dT%H:%M:%S%z')
-        # starts_at = starts_at_dt.format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z'
-
         for sensor in self.access_code_sensors:
             if sensor.access_code == access_code:
                 _LOGGER.info("User code '%s' already set", access_code)

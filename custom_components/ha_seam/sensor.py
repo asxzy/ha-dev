@@ -138,13 +138,18 @@ class SeamAccessCodeSensor(BinarySensorEntity):
         """Create a new sensor."""
         _LOGGER.info("Creating code: %s", access_code)
         # lock = seam_manager.device2lock[device.device_id]
-        seam_access_code: SeamAccessCode = await self._seam_manager.create_access_code(
+        try:
+            seam_access_code: SeamAccessCode = await self._seam_manager.create_access_code(
             device=self._device.seam_device,
             code=access_code,
             name=guest_name,
             starts_at=starts_at,
             ends_at=ends_at,
         )
+        except Exception as exc:  # pylint: disable=broad-except
+            _LOGGER.error("Failed to create code: %s", exc)
+            return
+
         _LOGGER.info("Created code: %s", seam_access_code)
         self._guest_name = seam_access_code.name
         self._access_code = seam_access_code.code

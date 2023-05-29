@@ -1,9 +1,12 @@
 """The Seam Integeration for Home Assistant integration."""
 from __future__ import annotations
 
+from datetime import datetime
 import logging
 from typing import TYPE_CHECKING
 
+from dateutil import parser as dt_parser
+import pytz
 import seamapi
 from seamapi.types import AccessCode, Device as SeamDevice
 
@@ -28,7 +31,7 @@ class SeamManager:
         hass: HomeAssistant,
         entry: ConfigEntry,
         api_key: str,
-        max_sensor_count: int = 3,
+        max_sensor_count: int = 10,
     ) -> None:
         """Initialize."""
         self.hass = hass
@@ -78,6 +81,8 @@ class SeamManager:
         ends_at: str = "2033-12-31T11:15:00-0600",
     ) -> AccessCode:
         """Create a new access code."""
+        if dt_parser.isoparse(ends_at) <= datetime.now(pytz.utc):
+            raise Exception("End time must be in the future")
         return await self.hass.async_add_executor_job(
             self.api_client.access_codes.create,
             device,
