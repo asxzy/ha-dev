@@ -22,12 +22,6 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
-# async def async_setup_platform(
-#     hass: HomeAssistant, config, add_entities, discovery_info=None
-# ):  # pylint: disable=unused-argument
-#     """Set up this integration with config flow."""
-#     return True
-
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -49,7 +43,6 @@ async def async_setup_entry(
 class SeamAccessCodeSensor(BinarySensorEntity):
     """Implementation of a seam code."""
 
-    # _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_icon = ACCESS_CODE_ICON
     _attr_name = "Seam Access Code"
 
@@ -89,9 +82,7 @@ class SeamAccessCodeSensor(BinarySensorEntity):
     @property
     def name(self):
         """Return the name of the sensor."""
-        return f"seam_access_code_{self._device.name}_{self._access_code_slot_idx+1}_{self._guest_name}_{self._access_code}"
-        # return f"seam_access_code_{self._device.name}_{self._access_code_slot_idx+1}"
-        # return f"access_code_{device.name}_slot_{self._access_code_slot_idx+1}"
+        return f"seam_access_code_{self._device.name}_{self._access_code_slot_idx+1}_{self._access_code}"
 
     @property
     def guest_name(self):
