@@ -21,6 +21,7 @@ from .const import (
     DOMAIN,
     LOCK_ICON,
     SERVICE_SET_LOCK_ACCESS_CODE,
+    SERVICE_SYNC_LOCK_ACCESS_CODE,
 )
 from .sensor import SeamAccessCodeSensor
 from .utils import normalize_name
@@ -56,12 +57,18 @@ async def async_setup_entry(
     )
 
 
+    platform.async_register_entity_service(
+        SERVICE_SYNC_LOCK_ACCESS_CODE,
+        {},
+        "async_sync_lock_access_code",
+    )
+
+
 
 class SeamLock(LockEntity):
     """Representation of a Seam lock."""
 
     _attr_should_poll = False
-    _attr_has_entity_name = True
 
     def __init__(self, seam_manager: "SeamManager", seam_device: SeamDevice) -> None:
         """Initialize the lock."""
@@ -83,13 +90,12 @@ class SeamLock(LockEntity):
     @property
     def name(self) -> str:
         """Return the name of the lock."""
-        return f"seam_lock_{normalize_name(self.seam_device.properties.name)}"
-
+        return f"Seam Lock - {normalize_name(self.seam_device.properties.name)}"
 
     @property
-    def access_code_sensors(self):
-        """Return the access code sensors."""
-        return [x.name for x in self._access_code_sensors]
+    def extra_state_attributes(self):
+        """Return the access code sensors as extra state attributes."""
+        return {"sensors":[normalize_name(x.name) for x in self._access_code_sensors]}
 
     async def init_sensors(self):
         """Initialize the sensors."""
@@ -175,6 +181,12 @@ class SeamLock(LockEntity):
                 return False
         _LOGGER.error("Out of slots")
         return False
+
+
+    async def async_sync_lock_access_code(self) -> None:
+        """Sync the access codes with the lock."""
+        _LOGGER.info("Function triggered async_sync_lock_access_code")
+        await self.update_sensors()
 
     async def async_lock(self, **kwargs: Any) -> None:
         """Lock the device."""

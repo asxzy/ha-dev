@@ -7,6 +7,7 @@ VERSION = "v0.0.0"
 CONF_APIKEY: Final = "api_key"
 
 SERVICE_SET_LOCK_ACCESS_CODE: Final = "set_lock_access_code"
+SERVICE_SYNC_LOCK_ACCESS_CODE: Final = "sync_lock_access_code"
 
 ATTR_ACCESS_CODE: Final = "access_code"
 ATTR_GUEST_NAME: Final = "guest_name"

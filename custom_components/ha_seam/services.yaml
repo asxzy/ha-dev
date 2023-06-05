@@ -33,3 +33,9 @@ set_lock_access_code:
       example: 2024-01-01T11:15:00-0600
       selector:
         text:
+sync_lock_access_code:
+  name: Sync a access_code on a lock
+  description: Sync a access_code on a lock
+  target:
+    entity:
+      integration: ha_seam

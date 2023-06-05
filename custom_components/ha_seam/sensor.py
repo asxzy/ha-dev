@@ -76,7 +76,7 @@ class SeamAccessCodeSensor(BinarySensorEntity):
     @property
     def name(self):
         """Return the name of the sensor."""
-        return f"seam_access_code_{self._device.name}_{self._access_code_slot_idx+1}"
+        return f"Seam Access Code - {self._device.name} - {self._access_code_slot_idx+1}"
 
     @property
     def device_info(self):

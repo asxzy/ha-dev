@@ -22,7 +22,8 @@
       "turn_on": "Turn on {entity_name}",
       "turn_off": "Turn off {entity_name}",
       "clear_lock_access_code": "Clear access_code on {entity_name}",
-      "set_lock_access_code": "Set a access_code on {entity_name}"
+      "set_lock_access_code": "Set a access_code on {entity_name}",
+      "sync_lock_access_codes": "Sync access_codes on {entity_name}"
     }
   }
 }
