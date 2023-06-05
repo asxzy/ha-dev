@@ -95,7 +95,7 @@ class SeamLock(LockEntity):
     @property
     def extra_state_attributes(self):
         """Return the access code sensors as extra state attributes."""
-        return {"sensors":[normalize_name(x.name) for x in self._access_code_sensors]}
+        return {"access_code_sensors":[normalize_name(x.name) for x in self._access_code_sensors]}
 
     async def init_sensors(self):
         """Initialize the sensors."""

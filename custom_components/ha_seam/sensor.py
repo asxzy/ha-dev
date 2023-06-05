@@ -22,7 +22,6 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
-
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -79,39 +78,21 @@ class SeamAccessCodeSensor(BinarySensorEntity):
         return f"Seam Access Code - {self._device.name} - {self._access_code_slot_idx+1}"
 
     @property
+    def extra_state_attributes(self):
+        """Return the access code sensors as extra state attributes."""
+        return {
+            "access_code": self._access_code,
+            "guest_name": self._guest_name,
+            "starts_at": self._starts_at,
+            "ends_at": self._ends_at,
+            "access_code_id": self._access_code_id,
+            "access_code_slot_idx": self._access_code_slot_idx,
+        }
+
+    @property
     def device_info(self):
         """Return the device info block."""
         return self._device.device_info
-
-    @property
-    def guest_name(self):
-        """Return the name of the sensor."""
-        return self._guest_name
-
-    @property
-    def access_code(self):
-        """Return True if calendar is ready."""
-        return self._access_code
-
-    @property
-    def starts_at(self):
-        """Return the start of the event."""
-        return self._starts_at
-
-    @property
-    def ends_at(self):
-        """Return the end of the event."""
-        return self._ends_at
-
-    @property
-    def access_code_id(self):
-        """Return the unique_id."""
-        return self._access_code_id
-
-    @property
-    def access_code_slot_idx(self):
-        """Return the unique_id."""
-        return self._access_code_slot_idx
 
     @property
     def is_on(self):
@@ -130,12 +111,12 @@ class SeamAccessCodeSensor(BinarySensorEntity):
         # lock = seam_manager.device2lock[device.device_id]
         try:
             seam_access_code: SeamAccessCode = await self._seam_manager.create_access_code(
-            device=self._device.seam_device,
-            code=access_code,
-            name=guest_name,
-            starts_at=starts_at,
-            ends_at=ends_at,
-        )
+                device=self._device.seam_device,
+                code=access_code,
+                name=guest_name,
+                starts_at=starts_at,
+                ends_at=ends_at,
+            )
         except Exception as exc:  # pylint: disable=broad-except
             _LOGGER.error("Failed to create code: %s", exc)
             return
@@ -146,7 +127,6 @@ class SeamAccessCodeSensor(BinarySensorEntity):
         self._starts_at = seam_access_code.starts_at
         self._ends_at = seam_access_code.ends_at
         self._access_code_id = seam_access_code.access_code_id
-
 
     def update_sensor(
         self,
