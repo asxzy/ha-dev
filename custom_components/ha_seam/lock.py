@@ -23,6 +23,7 @@ from .const import (
     SERVICE_SET_LOCK_ACCESS_CODE,
 )
 from .sensor import SeamAccessCodeSensor
+from .utils import normalize_name
 
 if TYPE_CHECKING:
     from .seam import SeamManager
@@ -74,16 +75,26 @@ class SeamLock(LockEntity):
             # add identifiers to link the device to its entity
             identifiers={(DOMAIN, self.seam_device.device_id)}
         )
-        self._attr_name = self.seam_device.properties.name
         self._attr_unique_id = self.seam_device.device_id
         self._attr_icon = LOCK_ICON
 
-        self.access_code_sensors = []
+        self._access_code_sensors: "SeamAccessCodeSensor" = []
+
+    @property
+    def name(self) -> str:
+        """Return the name of the lock."""
+        return f"seam_lock_{normalize_name(self.seam_device.properties.name)}"
+
+
+    @property
+    def access_code_sensors(self):
+        """Return the access code sensors."""
+        return [x.name for x in self._access_code_sensors]
 
     async def init_sensors(self):
         """Initialize the sensors."""
         _LOGGER.info("Initializing %s sensors", self.seam_manager.max_sensor_count)
-        self.access_code_sensors = [
+        self._access_code_sensors = [
             SeamAccessCodeSensor(
                 seam_manager=self.seam_manager,
                 device=self,
@@ -104,9 +115,9 @@ class SeamLock(LockEntity):
         access_codes.sort(key=lambda x: x.starts_at)
         for idx in range(self.seam_manager.max_sensor_count):
             if idx < len(access_codes):
-                self.access_code_sensors[idx].update_sensor(idx, access_codes[idx])
+                self._access_code_sensors[idx].update_sensor(idx, access_codes[idx])
             else:
-                self.access_code_sensors[idx].update_sensor(idx, None)
+                self._access_code_sensors[idx].update_sensor(idx, None)
 
     async def async_set_lock_access_code(
         self,
@@ -118,7 +129,7 @@ class SeamLock(LockEntity):
         """Set the access_code to index X on the lock."""
         _LOGGER.info("Function triggered async_set_lock_access_code")
 
-        for sensor in self.access_code_sensors:
+        for sensor in self._access_code_sensors:
             if sensor.access_code == access_code:
                 _LOGGER.info("User code '%s' already set", access_code)
                 # check if the code details are the same

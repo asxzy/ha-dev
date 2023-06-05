@@ -34,7 +34,7 @@ async def async_setup_entry(
     sensors = []
     for lock in seam_manager.locks.values():
         await lock.update_sensors()
-        sensors.extend(lock.access_code_sensors)
+        sensors.extend(lock._access_code_sensors)
 
     _LOGGER.info("Adding %s sensors", len(sensors))
     async_add_entities(sensors)
@@ -44,7 +44,6 @@ class SeamAccessCodeSensor(BinarySensorEntity):
     """Implementation of a seam code."""
 
     _attr_icon = ACCESS_CODE_ICON
-    _attr_name = "Seam Access Code"
 
     def __init__(
         self,
@@ -75,14 +74,14 @@ class SeamAccessCodeSensor(BinarySensorEntity):
         self._attr_icon = ACCESS_CODE_ICON
 
     @property
+    def name(self):
+        """Return the name of the sensor."""
+        return f"seam_access_code_{self._device.name}_{self._access_code_slot_idx+1}"
+
+    @property
     def device_info(self):
         """Return the device info block."""
         return self._device.device_info
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return f"seam_access_code_{self._device.name}_{self._access_code_slot_idx+1}_{self._access_code}"
 
     @property
     def guest_name(self):

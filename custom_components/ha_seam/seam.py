@@ -31,7 +31,7 @@ class SeamManager:
         hass: HomeAssistant,
         entry: ConfigEntry,
         api_key: str,
-        max_sensor_count: int = 10,
+        max_sensor_count: int = 5,
     ) -> None:
         """Initialize."""
         self.hass = hass
