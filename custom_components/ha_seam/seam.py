@@ -31,7 +31,7 @@ class SeamManager:
         hass: HomeAssistant,
         entry: ConfigEntry,
         api_key: str,
-        max_sensor_count: int = 5,
+        max_sensor_count: int = 10,
     ) -> None:
         """Initialize."""
         self.hass = hass
@@ -56,7 +56,7 @@ class SeamManager:
         for seam_device in await self.hass.async_add_executor_job(self.api_client.locks.list):
             if seam_device.device_type == "august_lock":
                 # skip locks without a keypad
-                if 'access_code' not in seam_device.capabilities_supported:
+                if "access_code" not in seam_device.capabilities_supported:
                     _LOGGER.info("Skipping lock without keypad: %s", seam_device.device_id)
                     continue
 
@@ -70,7 +70,7 @@ class SeamManager:
 
     async def get_access_code_by_lock(self, lock: SeamDevice):
         """Get all access codes for a lock."""
-        return await self.hass.async_add_executor_job(self.api_client.access_codes.list,lock)
+        return await self.hass.async_add_executor_job(self.api_client.access_codes.list, lock)
 
     async def create_access_code(
         self,

@@ -56,13 +56,11 @@ async def async_setup_entry(
         "async_set_lock_access_code",
     )
 
-
     platform.async_register_entity_service(
         SERVICE_SYNC_LOCK_ACCESS_CODE,
         {},
         "async_sync_lock_access_code",
     )
-
 
 
 class SeamLock(LockEntity):
@@ -85,7 +83,7 @@ class SeamLock(LockEntity):
         self._attr_unique_id = self.seam_device.device_id
         self._attr_icon = LOCK_ICON
 
-        self._access_code_sensors: "SeamAccessCodeSensor" = []
+        self.access_code_sensors: "SeamAccessCodeSensor" = []
 
     @property
     def name(self) -> str:
@@ -95,18 +93,18 @@ class SeamLock(LockEntity):
     @property
     def extra_state_attributes(self):
         """Return the access code sensors as extra state attributes."""
-        return {"access_code_sensors":[normalize_name(x.name) for x in self._access_code_sensors]}
+        return {"access_code_sensors": [normalize_name(x.name) for x in self.access_code_sensors]}
 
     async def init_sensors(self):
         """Initialize the sensors."""
         _LOGGER.info("Initializing %s sensors", self.seam_manager.max_sensor_count)
-        self._access_code_sensors = [
+        self.access_code_sensors = [
             SeamAccessCodeSensor(
                 seam_manager=self.seam_manager,
                 device=self,
                 lock=self.seam_device,
                 access_code_slot_idx=x,
-                guest_name=None,
+                slot_name=None,
                 access_code=None,
                 starts_at=None,
                 ends_at=None,
@@ -121,9 +119,9 @@ class SeamLock(LockEntity):
         access_codes.sort(key=lambda x: x.starts_at)
         for idx in range(self.seam_manager.max_sensor_count):
             if idx < len(access_codes):
-                self._access_code_sensors[idx].update_sensor(idx, access_codes[idx])
+                self.access_code_sensors[idx].update_sensor(idx, access_codes[idx])
             else:
-                self._access_code_sensors[idx].update_sensor(idx, None)
+                self.access_code_sensors[idx].update_sensor(idx, None)
 
     async def async_set_lock_access_code(
         self,
@@ -135,7 +133,7 @@ class SeamLock(LockEntity):
         """Set the access_code to index X on the lock."""
         _LOGGER.info("Function triggered async_set_lock_access_code")
 
-        for sensor in self._access_code_sensors:
+        for sensor in self.access_code_sensors:
             if sensor.access_code == access_code:
                 _LOGGER.info("User code '%s' already set", access_code)
                 # check if the code details are the same
@@ -179,9 +177,8 @@ class SeamLock(LockEntity):
                 except Exception as exc:  # pylint: disable=broad-except
                     _LOGGER.error("Failed to set user code '%s': %s", access_code, exc)
                 return False
-        _LOGGER.error("Out of slots")
+        _LOGGER.error(f"Out of slots for lock {self.name}")
         return False
-
 
     async def async_sync_lock_access_code(self) -> None:
         """Sync the access codes with the lock."""
