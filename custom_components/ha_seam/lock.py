@@ -2,26 +2,27 @@
 import logging
 from typing import TYPE_CHECKING, Any
 
-from dateutil import parser as dt_parser
-from seamapi.types import Device as SeamDevice
 import voluptuous as vol
-
+from dateutil import parser as dt_parser
 from homeassistant.components.lock import LockEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from seamapi.types import Device as SeamDevice
 
 from .const import (
     ATTR_ACCESS_CODE,
     ATTR_ENDS_AT,
-    ATTR_GUEST_NAME,
+    ATTR_RESERVATION_CODE,
     ATTR_STARTS_AT,
     DOMAIN,
     LOCK_ICON,
     SERVICE_SET_LOCK_ACCESS_CODE,
     SERVICE_SYNC_LOCK_ACCESS_CODE,
+    SERVICE_UPDATE_LOCK_ACCESS_CODE,
 )
 from .sensor import SeamAccessCodeSensor
 from .utils import normalize_name
@@ -49,7 +50,7 @@ async def async_setup_entry(
         SERVICE_SET_LOCK_ACCESS_CODE,
         {
             vol.Required(ATTR_ACCESS_CODE): cv.string,
-            vol.Required(ATTR_GUEST_NAME): cv.string,
+            vol.Required(ATTR_RESERVATION_CODE): cv.string,
             vol.Required(ATTR_STARTS_AT): cv.string,
             vol.Required(ATTR_ENDS_AT): cv.string,
         },
@@ -60,6 +61,17 @@ async def async_setup_entry(
         SERVICE_SYNC_LOCK_ACCESS_CODE,
         {},
         "async_sync_lock_access_code",
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_UPDATE_LOCK_ACCESS_CODE,
+        {
+            vol.Required(ATTR_ACCESS_CODE): cv.string,
+            vol.Required(ATTR_RESERVATION_CODE): cv.string,
+            vol.Required(ATTR_STARTS_AT): cv.string,
+            vol.Required(ATTR_ENDS_AT): cv.string,
+        },
+        "async_update_lock_access_code",
     )
 
 
@@ -104,16 +116,31 @@ class SeamLock(LockEntity):
                 device=self,
                 lock=self.seam_device,
                 access_code_slot_idx=x,
-                slot_name=None,
+                reservation_code=None,
                 access_code=None,
                 starts_at=None,
                 ends_at=None,
                 access_code_id=None,
+                status=None,
             )
             for x in range(self.seam_manager.max_sensor_count)
         ]
 
     async def update_sensors(self):
+        """Update the sensors."""
+        access_codes = await self.seam_manager.get_access_code_by_lock(self.seam_device)
+        access_codes.sort(key=lambda x: x.starts_at)
+        _LOGGER.info('='*20)
+        _LOGGER.info(access_codes)
+        for idx in range(self.seam_manager.max_sensor_count):
+            if idx < len(access_codes):
+                self.access_code_sensors[idx].update_sensor(idx, access_codes[idx])
+            else:
+                self.access_code_sensors[idx].update_sensor(idx, None)
+
+    async def update_access_code(
+        self,
+    ):
         """Update the sensors."""
         access_codes = await self.seam_manager.get_access_code_by_lock(self.seam_device)
         access_codes.sort(key=lambda x: x.starts_at)
@@ -126,7 +153,7 @@ class SeamLock(LockEntity):
     async def async_set_lock_access_code(
         self,
         access_code: str,
-        guest_name: str,
+        reservation_code: str,
         starts_at: str,  # "2023-05-01T16:00:00-0600"
         ends_at: str,
     ) -> None:
@@ -134,41 +161,12 @@ class SeamLock(LockEntity):
         _LOGGER.info("Function triggered async_set_lock_access_code")
 
         for sensor in self.access_code_sensors:
-            if sensor.access_code == access_code:
-                _LOGGER.info("User code '%s' already set", access_code)
-                # check if the code details are the same
-                # show a warning if they are not
-                if sensor.guest_name != guest_name:
-                    _LOGGER.error(
-                        "User code '%s' already set with different guest name. Request '%s' but existing '%s'",
-                        access_code,
-                        guest_name,
-                        sensor.guest_name,
-                    )
-                    return False
-                if dt_parser.isoparse(sensor.starts_at) != dt_parser.isoparse(starts_at):
-                    _LOGGER.error(
-                        "User code '%s' already set with different start time. Request '%s' but existing '%s'",
-                        access_code,
-                        starts_at,
-                        sensor.starts_at,
-                    )
-                    return False
-                if dt_parser.isoparse(sensor.ends_at) != dt_parser.isoparse(ends_at):
-                    _LOGGER.error(
-                        "User code '%s' already set with different end time. Request '%s' but existing '%s'",
-                        access_code,
-                        ends_at,
-                        sensor.ends_at,
-                    )
-                    return False
-                return True
-            elif sensor.access_code is None:
+            if sensor.access_code is None:
                 # use the first empty slot
                 try:
                     await sensor.create_code(
                         access_code,
-                        guest_name,
+                        reservation_code,
                         starts_at,
                         ends_at,
                     )
@@ -177,13 +175,41 @@ class SeamLock(LockEntity):
                 except Exception as exc:  # pylint: disable=broad-except
                     _LOGGER.error("Failed to set user code '%s': %s", access_code, exc)
                 return False
-        _LOGGER.error(f"Out of slots for lock {self.name}")
+        _LOGGER.error("Out of slots for lock %s", self.name)
         return False
 
     async def async_sync_lock_access_code(self) -> None:
         """Sync the access codes with the lock."""
         _LOGGER.info("Function triggered async_sync_lock_access_code")
         await self.update_sensors()
+
+    async def async_update_lock_access_code(
+        self,
+        access_code: str,
+        reservation_code: str,
+        starts_at: str,  # "2023-05-01T16:00:00-0600"
+        ends_at: str,
+    ) -> None:
+        """Set the access_code to index X on the lock."""
+        _LOGGER.info("Function triggered async_update_lock_access_code")
+        for sensor in self.access_code_sensors:
+            if sensor.reservation_code == reservation_code:
+                # use the first empty slot
+                try:
+                    await sensor.update_code(
+                        access_code,
+                        reservation_code,
+                        starts_at,
+                        ends_at,
+                    )
+                    _LOGGER.debug("User code '%s' updated", access_code)
+                    await self.update_sensors()
+                    return True
+                except Exception as exc:  # pylint: disable=broad-except
+                    _LOGGER.error("Failed to set user code '%s': %s", access_code, exc)
+                return False
+        _LOGGER.error("Reservation not found %s", self.name)
+        return False
 
     async def async_lock(self, **kwargs: Any) -> None:
         """Lock the device."""

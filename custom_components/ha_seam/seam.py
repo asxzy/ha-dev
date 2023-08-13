@@ -31,7 +31,7 @@ class SeamManager:
         hass: HomeAssistant,
         entry: ConfigEntry,
         api_key: str,
-        max_sensor_count: int = 10,
+        max_sensor_count: int = 5,
     ) -> None:
         """Initialize."""
         self.hass = hass
@@ -82,9 +82,29 @@ class SeamManager:
     ) -> AccessCode:
         """Create a new access code."""
         if dt_parser.isoparse(ends_at) <= datetime.now(pytz.utc):
-            raise Exception("End time must be in the future")
+            raise ValueError("End time must be in the future")
         return await self.hass.async_add_executor_job(
             self.api_client.access_codes.create,
+            device,
+            name,
+            code,
+            starts_at,
+            ends_at,
+        )
+
+    async def update_access_code(
+        self,
+        device: SeamDevice,
+        code: str = "8888",
+        name: str = "test",
+        starts_at: str = "2023-05-01T16:00:00-0600",
+        ends_at: str = "2033-12-31T11:15:00-0600",
+    ) -> AccessCode:
+        """Create a new access code."""
+        if dt_parser.isoparse(ends_at) <= datetime.now(pytz.utc):
+            raise ValueError("End time must be in the future")
+        return await self.hass.async_add_executor_job(
+            self.api_client.access_codes.update,
             device,
             name,
             code,

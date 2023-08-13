@@ -4,7 +4,9 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from seamapi.types import AccessCode as SeamAccessCode, Device as SeamDevice
+from dateutil import parser as dt_parser
+from seamapi.types import AccessCode as SeamAccessCode
+from seamapi.types import Device as SeamDevice
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
@@ -50,22 +52,24 @@ class SeamAccessCodeSensor(BinarySensorEntity):
         device: SeamLock,
         lock: SeamDevice,
         access_code_slot_idx: int,
-        slot_name: str = None,
+        reservation_code: str = None,
         access_code: str = None,
         starts_at: str = None,
         ends_at: str = None,
         access_code_id: str = None,
+        status: str = None,
     ) -> None:
         """Initialize the sensor."""
         self._seam_manager = seam_manager
         self._device = device
         self._lock = lock
-        self.slot_name = slot_name
+        self.reservation_code = reservation_code
         self.access_code = access_code
         self.access_code_slot_idx = access_code_slot_idx
         self.starts_at = starts_at
         self.ends_at = ends_at
         self.access_code_id = access_code_id
+        self.status = status
 
         # HA attributes
         self._entity_category = EntityCategory.DIAGNOSTIC
@@ -82,11 +86,12 @@ class SeamAccessCodeSensor(BinarySensorEntity):
         """Return the access code sensors as extra state attributes."""
         return {
             "access_code": self.access_code,
-            "slot_name": self.slot_name,
+            "reservation_code": self.reservation_code,
             "starts_at": self.starts_at,
             "ends_at": self.ends_at,
             "access_code_id": self.access_code_id,
             "access_code_slot_idx": self.access_code_slot_idx,
+            "status": self.status,
         }
 
     @property
@@ -102,7 +107,7 @@ class SeamAccessCodeSensor(BinarySensorEntity):
     async def create_code(
         self,
         access_code,
-        slot_name,
+        reservation_code,
         starts_at,
         ends_at,
     ) -> None:
@@ -113,7 +118,7 @@ class SeamAccessCodeSensor(BinarySensorEntity):
             seam_access_code: SeamAccessCode = await self._seam_manager.create_access_code(
                 device=self._device.seam_device,
                 code=access_code,
-                name=slot_name,
+                name=reservation_code,
                 starts_at=starts_at,
                 ends_at=ends_at,
             )
@@ -122,7 +127,36 @@ class SeamAccessCodeSensor(BinarySensorEntity):
             return
 
         _LOGGER.info("Created code: %s", seam_access_code)
-        self.slot_name = seam_access_code.name
+        self.reservation_code = seam_access_code.name
+        self.access_code = seam_access_code.code
+        self.starts_at = seam_access_code.starts_at
+        self.ends_at = seam_access_code.ends_at
+        self.access_code_id = seam_access_code.access_code_id
+
+    async def update_code(
+        self,
+        access_code,
+        reservation_code,
+        starts_at,
+        ends_at,
+    ) -> None:
+        """Create a new sensor."""
+        _LOGGER.info("Creating code: %s", access_code)
+        # lock = seam_manager.device2lock[device.device_id]
+        try:
+            seam_access_code: SeamAccessCode = await self._seam_manager.update_access_code(
+                device=self._device.seam_device,
+                code=access_code,
+                name=reservation_code,
+                starts_at=starts_at,
+                ends_at=ends_at,
+            )
+        except Exception as exc:  # pylint: disable=broad-except
+            _LOGGER.error("Failed to create code: %s", exc)
+            return
+
+        _LOGGER.info("Created code: %s", seam_access_code)
+        self.reservation_code = seam_access_code.name
         self.access_code = seam_access_code.code
         self.starts_at = seam_access_code.starts_at
         self.ends_at = seam_access_code.ends_at
@@ -137,8 +171,16 @@ class SeamAccessCodeSensor(BinarySensorEntity):
         _LOGGER.info("Updating code: %s", access_code)
         self.access_code_slot_idx = idx
         if access_code is not None:
-            self.slot_name = access_code.name
+            self.reservation_code = access_code.name
             self.access_code = access_code.code
             self.starts_at = access_code.starts_at
             self.ends_at = access_code.ends_at
             self.access_code_id = access_code.access_code_id
+            self.status = access_code.status
+        else:
+            self.reservation_code = None
+            self.access_code = None
+            self.starts_at = None
+            self.ends_at = None
+            self.access_code_id = None
+            self.status = None
