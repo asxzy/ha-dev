@@ -94,6 +94,7 @@ class SeamManager:
 
     async def update_access_code(
         self,
+        access_code: str,
         device: SeamDevice,
         code: str = "8888",
         name: str = "test",
@@ -105,6 +106,7 @@ class SeamManager:
             raise ValueError("End time must be in the future")
         return await self.hass.async_add_executor_job(
             self.api_client.access_codes.update,
+            access_code,
             device,
             name,
             code,
