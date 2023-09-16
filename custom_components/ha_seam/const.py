@@ -16,4 +16,4 @@ ATTR_STARTS_AT: Final = "starts_at"
 ATTR_ENDS_AT: Final = "ends_at"
 ACCESS_CODE_ICON: Final = "mdi:account-key"
 LOCK_ICON: Final = "mdi:lock"
-MAX_ACCESS_CODES: Final = 5
+MAX_ACCESS_CODES: Final = 20

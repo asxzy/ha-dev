@@ -15,6 +15,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from .lock import SeamLock
+from .const import MAX_ACCESS_CODES
 
 if TYPE_CHECKING:
     pass
@@ -31,7 +32,7 @@ class SeamManager:
         hass: HomeAssistant,
         entry: ConfigEntry,
         api_key: str,
-        max_sensor_count: int = 5,
+        max_sensor_count: int = MAX_ACCESS_CODES,
     ) -> None:
         """Initialize."""
         self.hass = hass
