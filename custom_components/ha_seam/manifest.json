@@ -7,7 +7,7 @@
   "documentation": "https://www.home-assistant.io/integrations/ha_seam",
   "homekit": {},
   "iot_class": "cloud_polling",
-  "requirements": ["seamapi==2.12.2"],
+  "requirements": ["seamapi=>2.15.1"],
   "ssdp": [],
   "zeroconf": [],
   "version": "v0.0.0"
