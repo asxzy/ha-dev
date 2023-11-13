@@ -84,11 +84,13 @@ class SeamManager:
         """Create a new access code."""
         if dt_parser.isoparse(ends_at) <= datetime.now(pytz.utc):
             raise ValueError("End time must be in the future")
+        _LOGGER.info("DEBUG: %s %s %s %s %s", device, code, name, starts_at, ends_at)
         return await self.hass.async_add_executor_job(
             self.api_client.access_codes.create,
             device,
             name,
             code,
+            "time_bound",
             starts_at,
             ends_at,
         )
